@@ -6,8 +6,19 @@ Books, members and loans, saved in a SQLite database.
 """
 
 from .book import Book
+from .database import Database
 from .enums import MemberStatus
-from .exceptions import LibraryError, LoanLimitError, MemberNotActiveError, ValidationError
+from .exceptions import (
+    BookNotFoundError,
+    DatabaseError,
+    DuplicateError,
+    LibraryError,
+    LoanLimitError,
+    MemberNotActiveError,
+    MemberNotFoundError,
+    NotFoundError,
+    ValidationError,
+)
 from .isbn import normalise_isbn
 from .members import (
     AdultMember,
@@ -18,8 +29,14 @@ from .members import (
     member_type_names,
     register_member_type,
 )
+from .repositories import (
+    BookRepository,
+    MemberRepository,
+    SQLiteBookRepository,
+    SQLiteMemberRepository,
+)
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "Book",
@@ -31,10 +48,20 @@ __all__ = [
     "member_type_names",
     "register_member_type",
     "MemberStatus",
+    "Database",
+    "BookRepository",
+    "MemberRepository",
+    "SQLiteBookRepository",
+    "SQLiteMemberRepository",
     "normalise_isbn",
     "LibraryError",
     "ValidationError",
     "MemberNotActiveError",
     "LoanLimitError",
+    "NotFoundError",
+    "BookNotFoundError",
+    "MemberNotFoundError",
+    "DuplicateError",
+    "DatabaseError",
     "__version__",
 ]

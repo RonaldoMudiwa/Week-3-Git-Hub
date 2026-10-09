@@ -23,3 +23,13 @@ class FakeClock:
 @pytest.fixture
 def clock() -> FakeClock:
     return FakeClock()
+
+
+@pytest.fixture
+def db():
+    """A fresh database in memory for each test. Nothing is written to disk."""
+    from library import Database
+
+    database = Database()
+    yield database
+    database.close()

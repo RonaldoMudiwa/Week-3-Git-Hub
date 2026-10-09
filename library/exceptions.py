@@ -20,3 +20,23 @@ class MemberNotActiveError(LibraryError):
 
 class LoanLimitError(LibraryError):
     """The member already has as many books as their card allows."""
+
+
+class NotFoundError(LibraryError):
+    """Something asked for by id doesn't exist."""
+
+
+class BookNotFoundError(NotFoundError):
+    """No book has that id or ISBN."""
+
+
+class MemberNotFoundError(NotFoundError):
+    """No member has that id."""
+
+
+class DuplicateError(LibraryError):
+    """Something unique is already taken, e.g. an ISBN or an email."""
+
+
+class DatabaseError(LibraryError):
+    """The database couldn't be opened or used."""

@@ -8,8 +8,8 @@ Week 2 added SOLID. This week adds a real database.
 
 ## Status
 
-Day 1 of 7. Books with ISBN checking, and three kinds of member that each
-borrow by their own rules.
+Day 2 of 7. Books with ISBN checking, three kinds of member that each
+borrow by their own rules, and both saved in SQLite.
 
 ## Getting started
 
@@ -57,10 +57,42 @@ member.check_can_borrow(books_on_loan=8)   # raises LoanLimitError
 `Member` is an abstract class. Each type only says how many books and for how
 long. A new type is a new subclass with `@register_member_type` above it.
 
+## The database
+
+```python
+from library import Database, SQLiteBookRepository, SQLiteMemberRepository
+
+with Database("data/library.db") as db:      # or Database() for one in memory
+    books = SQLiteBookRepository(db)
+    members = SQLiteMemberRepository(db)
+
+    book = books.add(Book("0306406152", "Things Fall Apart", "Chinua Achebe"))
+    book.book_id                              # 1
+    books.find_by_isbn("978-0-306-40615-7")   # the same book
+
+    amara = members.add(member_class_for("student")("Amara Okafor", "amara@example.com"))
+    members.get(amara.member_id)              # comes back as a StudentMember
+```
+
+- **Tables are set up for you.** Each change to the tables is a numbered
+  step in `MIGRATIONS`. The database remembers which step it's on, so an
+  old file is brought up to date when it's opened, and a file from a newer
+  version of the program is refused instead of being damaged.
+- **Values never go into the SQL text.** Every query uses `?` placeholders,
+  so a title like `Bobby'); DROP TABLE books` is stored as a title. This
+  stops SQL injection.
+- **Transactions.** `with db.transaction():` makes a group of changes happen
+  together or not at all. If anything inside fails, everything is undone.
+- **Unique rules live in the database too.** ISBNs and emails are `UNIQUE`
+  columns, so even a bug in the Python can't save the same book twice.
+- **Repositories.** The rest of the program only knows `BookRepository` and
+  `MemberRepository`, which are abstract. The SQLite versions plug in behind
+  them.
+
 ## Tests
 
 ```bash
-pytest          # 74 tests
+pytest          # 107 tests
 ```
 
 ## Week plan
