@@ -33,3 +33,26 @@ def db():
     database = Database()
     yield database
     database.close()
+
+
+@pytest.fixture
+def library(db, clock):
+    """A Library in memory, with a calendar the test controls."""
+    from library import Library
+
+    return Library.open(db, clock)
+
+
+ACHEBE_ISBN = "9780306406157"
+ADICHIE_ISBN = "080442957X"
+
+
+@pytest.fixture
+def stocked(library):
+    """Two books (ids 1 and 2) and one member of each type (ids 1, 2 and 3)."""
+    library.add_book(ACHEBE_ISBN, "Things Fall Apart", "Chinua Achebe", 1958, copies=2)
+    library.add_book(ADICHIE_ISBN, "Purple Hibiscus", "Chimamanda Adichie", 2003)
+    library.register_member("adult", "Ronaldo Mudiwa", "ronaldo@example.com")
+    library.register_member("student", "Amara Okafor", "amara@example.com")
+    library.register_member("child", "Tendai Moyo", "tendai@example.com")
+    return library

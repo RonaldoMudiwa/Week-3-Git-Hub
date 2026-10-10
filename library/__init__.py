@@ -9,17 +9,26 @@ from .book import Book
 from .database import Database
 from .enums import MemberStatus
 from .exceptions import (
+    AlreadyBorrowedError,
+    AlreadyReturnedError,
+    BookInUseError,
     BookNotFoundError,
     DatabaseError,
     DuplicateError,
     LibraryError,
+    LoanError,
     LoanLimitError,
+    LoanNotFoundError,
     MemberNotActiveError,
     MemberNotFoundError,
+    NoCopiesAvailableError,
     NotFoundError,
+    OverdueLoansError,
+    RenewalError,
     ValidationError,
 )
 from .isbn import normalise_isbn
+from .loans import Loan, LoanRepository, SQLiteLoanRepository
 from .members import (
     AdultMember,
     ChildMember,
@@ -35,11 +44,14 @@ from .repositories import (
     SQLiteBookRepository,
     SQLiteMemberRepository,
 )
+from .service import Library
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 __all__ = [
+    "Library",
     "Book",
+    "Loan",
     "Member",
     "AdultMember",
     "StudentMember",
@@ -53,11 +65,21 @@ __all__ = [
     "MemberRepository",
     "SQLiteBookRepository",
     "SQLiteMemberRepository",
+    "LoanRepository",
+    "SQLiteLoanRepository",
     "normalise_isbn",
     "LibraryError",
     "ValidationError",
     "MemberNotActiveError",
+    "LoanError",
     "LoanLimitError",
+    "NoCopiesAvailableError",
+    "AlreadyBorrowedError",
+    "OverdueLoansError",
+    "AlreadyReturnedError",
+    "RenewalError",
+    "BookInUseError",
+    "LoanNotFoundError",
     "NotFoundError",
     "BookNotFoundError",
     "MemberNotFoundError",

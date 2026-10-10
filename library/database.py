@@ -43,6 +43,22 @@ MIGRATIONS: tuple[tuple[str, ...], ...] = (
         "CREATE INDEX idx_books_title ON books (title)",
         "CREATE INDEX idx_books_author ON books (author)",
     ),
+    # Version 2: loans. RESTRICT stops a book or member with loans being deleted.
+    (
+        """
+        CREATE TABLE loans (
+            loan_id      INTEGER PRIMARY KEY,
+            book_id      INTEGER NOT NULL REFERENCES books (book_id) ON DELETE RESTRICT,
+            member_id    INTEGER NOT NULL REFERENCES members (member_id) ON DELETE RESTRICT,
+            borrowed_on  TEXT    NOT NULL,
+            due_on       TEXT    NOT NULL,
+            returned_on  TEXT,
+            renewals     INTEGER NOT NULL DEFAULT 0 CHECK (renewals >= 0)
+        )
+        """,
+        "CREATE INDEX idx_loans_member ON loans (member_id, returned_on)",
+        "CREATE INDEX idx_loans_book ON loans (book_id, returned_on)",
+    ),
 )
 
 

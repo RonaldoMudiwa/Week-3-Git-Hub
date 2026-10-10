@@ -8,8 +8,9 @@ Week 2 added SOLID. This week adds a real database.
 
 ## Status
 
-Day 2 of 7. Books with ISBN checking, three kinds of member that each
-borrow by their own rules, and both saved in SQLite.
+Day 3 of 7. Books with ISBN checking, three kinds of member that each
+borrow by their own rules, everything saved in SQLite, and lending, returns
+and renewals.
 
 ## Getting started
 
@@ -89,10 +90,50 @@ with Database("data/library.db") as db:      # or Database() for one in memory
   `MemberRepository`, which are abstract. The SQLite versions plug in behind
   them.
 
+## Lending
+
+`Library` is the front desk. It's the one place that knows the rules that
+involve a book, a member and their loans all at once.
+
+```python
+from library import Database, Library
+
+with Database("data/library.db") as db:
+    library = Library.open(db)
+
+    book = library.add_book("0306406152", "Things Fall Apart", "Chinua Achebe", copies=2)
+    amara = library.register_member("student", "Amara Okafor", "amara@example.com")
+
+    loan = library.lend(book.book_id, amara.member_id)   # due in 28 days for a student
+    library.available_copies(book.book_id)               # 1
+    library.renew(loan.loan_id)                          # another 28 days from today
+    library.give_back(loan.loan_id)
+```
+
+A book can't be lent if:
+
+- the member is suspended
+- they have a late book (it has to come back first)
+- they're at the limit for their type of card
+- they already have a copy of that book
+- every copy is out
+
+Each of these has its own error, and they all inherit from `LoanError`, so
+`except LoanError` catches any of them. The checks and the new loan run in
+one transaction, so two people can never both get the last copy.
+
+A loan can be renewed while it's not late, up to the limit for the member's
+card. The new due date counts from the day it's renewed. A book that has
+ever been lent can't be deleted, so no one's history points at a missing
+book. Database rules (`FOREIGN KEY ... ON DELETE RESTRICT`) back this up.
+
+`Library` only uses the abstract repositories, and is handed the database's
+`transaction` function, so it never touches SQLite directly.
+
 ## Tests
 
 ```bash
-pytest          # 107 tests
+pytest          # 156 tests
 ```
 
 ## Week plan
