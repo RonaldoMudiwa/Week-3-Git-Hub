@@ -163,3 +163,21 @@ def test_type_names_must_be_unique():
         @register_member_type
         class Copy(AdultMember):
             pass
+
+
+def test_every_type_has_a_fine_policy(member):
+    from library import FinePolicy
+
+    assert isinstance(member.fine_policy, FinePolicy)
+    assert member.fine_policy.fine_for(0) == 0
+
+
+@pytest.mark.parametrize("cls, ten_days_late", [
+    (AdultMember, "2.50"),
+    (StudentMember, "1.50"),
+    (ChildMember, "0.00"),
+])
+def test_fines_depend_on_member_type(cls, ten_days_late):
+    from decimal import Decimal
+
+    assert cls("Ronaldo", "r@example.com").fine_policy.fine_for(10) == Decimal(ten_days_late)

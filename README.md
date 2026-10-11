@@ -8,9 +8,9 @@ Week 2 added SOLID. This week adds a real database.
 
 ## Status
 
-Day 3 of 7. Books with ISBN checking, three kinds of member that each
-borrow by their own rules, everything saved in SQLite, and lending, returns
-and renewals.
+Day 4 of 7. Books with ISBN checking, three kinds of member that each
+borrow by their own rules, everything saved in SQLite, lending, returns and
+renewals, reservations and late fines.
 
 ## Getting started
 
@@ -41,11 +41,11 @@ checks again.
 
 ## Members
 
-| Type | Books at once | Loan length | Renewals |
-| --- | --- | --- | --- |
-| `AdultMember` | 5 | 21 days | 2 |
-| `StudentMember` | 8 | 28 days | 2 |
-| `ChildMember` | 3 | 14 days | 1 |
+| Type | Books at once | Loan length | Renewals | Late fine |
+| --- | --- | --- | --- | --- |
+| `AdultMember` | 5 | 21 days | 2 | 25p a day, up to £10 |
+| `StudentMember` | 8 | 28 days | 2 | 15p a day, up to £5 |
+| `ChildMember` | 3 | 14 days | 1 | None |
 
 ```python
 from library import member_class_for
@@ -130,10 +130,45 @@ book. Database rules (`FOREIGN KEY ... ON DELETE RESTRICT`) back this up.
 `Library` only uses the abstract repositories, and is handed the database's
 `transaction` function, so it never touches SQLite directly.
 
+## Reservations
+
+When every copy is out, a member can join the queue for it.
+
+```python
+reservation = library.reserve(book_id, member_id)
+receipt = library.give_back(loan_id)
+receipt.held_for          # the first person in the queue now has a copy kept
+library.lend(book_id, that_member_id)    # they collect it
+```
+
+When a copy comes back and someone is waiting, it's kept on the shelf for
+the first person in line for 3 days. Nobody else can borrow it. If they don't
+collect it in time, it moves to the next person, or back onto the shelf if
+nobody else is waiting. Copies the library buys later go to the queue first
+too. A book with people waiting can't be renewed. A reservation can be
+cancelled, and a kept copy then moves on.
+
+## Late fines
+
+Each member type has a `FinePolicy`. `DailyFine("0.25", maximum="10")`
+charges by the day up to a limit, and `NoFine()` charges nothing. When a late
+book comes back, `give_back()` works out the fine from the member's own
+policy and saves it.
+
+```python
+receipt = library.give_back(loan_id)
+receipt.fine                       # Fine(£1.00 for loan 4, unpaid) or None
+library.amount_owed(member_id)     # Decimal('1.00')
+library.pay_fine(receipt.fine.fine_id)
+```
+
+Owing £5 or more stops a member borrowing until they pay. Money is a
+`Decimal` and is saved as text, so no pennies are lost to rounding.
+
 ## Tests
 
 ```bash
-pytest          # 156 tests
+pytest          # 218 tests
 ```
 
 ## Week plan

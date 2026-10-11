@@ -59,6 +59,32 @@ MIGRATIONS: tuple[tuple[str, ...], ...] = (
         "CREATE INDEX idx_loans_member ON loans (member_id, returned_on)",
         "CREATE INDEX idx_loans_book ON loans (book_id, returned_on)",
     ),
+    # Version 3: late fines and reservations. Money is saved as text like
+    # "1.25" so no pennies are lost to rounding.
+    (
+        """
+        CREATE TABLE fines (
+            fine_id     INTEGER PRIMARY KEY,
+            loan_id     INTEGER NOT NULL UNIQUE REFERENCES loans (loan_id) ON DELETE RESTRICT,
+            member_id   INTEGER NOT NULL REFERENCES members (member_id) ON DELETE RESTRICT,
+            amount      TEXT    NOT NULL,
+            charged_on  TEXT    NOT NULL,
+            paid_on     TEXT
+        )
+        """,
+        """
+        CREATE TABLE reservations (
+            reservation_id  INTEGER PRIMARY KEY,
+            book_id         INTEGER NOT NULL REFERENCES books (book_id) ON DELETE RESTRICT,
+            member_id       INTEGER NOT NULL REFERENCES members (member_id) ON DELETE RESTRICT,
+            reserved_on     TEXT    NOT NULL,
+            status          TEXT    NOT NULL,
+            expires_on      TEXT
+        )
+        """,
+        "CREATE INDEX idx_fines_member ON fines (member_id, paid_on)",
+        "CREATE INDEX idx_reservations_book ON reservations (book_id, status)",
+    ),
 )
 
 

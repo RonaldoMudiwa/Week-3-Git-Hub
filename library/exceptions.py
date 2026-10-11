@@ -12,11 +12,16 @@ Everything inherits from LibraryError, so one except clause catches the lot.
     |   |-- OverdueLoansError
     |   |-- AlreadyReturnedError
     |   |-- RenewalError
+    |   |-- FinesOwedError
+    |-- ReservationError
+    |-- FineError
     |-- BookInUseError
     |-- NotFoundError
     |   |-- BookNotFoundError
     |   |-- MemberNotFoundError
     |   |-- LoanNotFoundError
+    |   |-- ReservationNotFoundError
+    |   |-- FineNotFoundError
     |-- DuplicateError
     |-- DatabaseError
 """
@@ -64,6 +69,18 @@ class RenewalError(LoanError):
     """The loan can't be extended, e.g. it's late or renewed too many times."""
 
 
+class FinesOwedError(LoanError):
+    """The member owes too much in fines to borrow more."""
+
+
+class ReservationError(LibraryError):
+    """A book can't be reserved, e.g. a copy is free or it's already reserved."""
+
+
+class FineError(LibraryError):
+    """A fine can't be paid, e.g. it was already paid."""
+
+
 class BookInUseError(LibraryError):
     """The book can't be removed or have copies taken away while it's lent out."""
 
@@ -82,6 +99,14 @@ class MemberNotFoundError(NotFoundError):
 
 class LoanNotFoundError(NotFoundError):
     """No loan has that id."""
+
+
+class ReservationNotFoundError(NotFoundError):
+    """No reservation has that id."""
+
+
+class FineNotFoundError(NotFoundError):
+    """No fine has that id."""
 
 
 class DuplicateError(LibraryError):

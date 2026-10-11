@@ -13,6 +13,7 @@ from typing import TypeVar
 
 from .enums import MemberStatus
 from .exceptions import LoanLimitError, MemberNotActiveError, ValidationError
+from .fines import DailyFine, FinePolicy, NoFine
 from .validation import clean_email, clean_text, whole_number
 
 _MemberT = TypeVar("_MemberT", bound=type["Member"])
@@ -131,6 +132,11 @@ class Member(ABC):
     # Borrowing rules
     # ------------------------------------------------------------------
 
+    @property
+    def fine_policy(self) -> FinePolicy:
+        """How late books are charged. 25p a day, up to £10, unless a type says otherwise."""
+        return DailyFine("0.25", maximum="10")
+
     def due_date(self, borrowed_on: date) -> date:
         return borrowed_on + timedelta(days=self.loan_days)
 
@@ -201,6 +207,10 @@ class StudentMember(Member):
     def loan_days(self) -> int:
         return 28
 
+    @property
+    def fine_policy(self) -> FinePolicy:
+        return DailyFine("0.15", maximum="5")
+
 
 @register_member_type
 class ChildMember(Member):
@@ -216,3 +226,8 @@ class ChildMember(Member):
     @property
     def loan_days(self) -> int:
         return 14
+
+    @property
+    def fine_policy(self) -> FinePolicy:
+        # No fines for children, so a late book never puts them off coming back.
+        return NoFine()

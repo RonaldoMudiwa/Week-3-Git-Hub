@@ -137,7 +137,7 @@ class TestReturning:
     def test_give_back_records_the_date(self, stocked, clock):
         loan = stocked.lend(ACHEBE, ADULT)
         clock.advance(5)
-        returned = stocked.give_back(loan.loan_id)
+        returned = stocked.give_back(loan.loan_id).loan
         assert returned.returned_on == date(2026, 10, 6)
         assert stocked.loans_for(ADULT) == []
         assert stocked.history_for(ADULT) == [returned]
@@ -151,7 +151,7 @@ class TestReturning:
     def test_late_return_lets_them_borrow_again(self, stocked, clock):
         loan = stocked.lend(ACHEBE, CHILD)
         clock.advance(20)
-        assert stocked.give_back(loan.loan_id).days_overdue(clock.today) == 6
+        assert stocked.give_back(loan.loan_id).loan.days_overdue(clock.today) == 6
         stocked.lend(ADICHIE, CHILD)
 
 

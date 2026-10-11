@@ -7,7 +7,7 @@ Books, members and loans, saved in a SQLite database.
 
 from .book import Book
 from .database import Database
-from .enums import MemberStatus
+from .enums import MemberStatus, ReservationStatus
 from .exceptions import (
     AlreadyBorrowedError,
     AlreadyReturnedError,
@@ -15,6 +15,9 @@ from .exceptions import (
     BookNotFoundError,
     DatabaseError,
     DuplicateError,
+    FineError,
+    FineNotFoundError,
+    FinesOwedError,
     LibraryError,
     LoanError,
     LoanLimitError,
@@ -25,10 +28,14 @@ from .exceptions import (
     NotFoundError,
     OverdueLoansError,
     RenewalError,
+    ReservationError,
+    ReservationNotFoundError,
     ValidationError,
 )
+from .fines import DailyFine, Fine, FinePolicy, FineRepository, NoFine, SQLiteFineRepository
 from .isbn import normalise_isbn
 from .loans import Loan, LoanRepository, SQLiteLoanRepository
+from .money import format_money, to_money
 from .members import (
     AdultMember,
     ChildMember,
@@ -44,14 +51,21 @@ from .repositories import (
     SQLiteBookRepository,
     SQLiteMemberRepository,
 )
-from .service import Library
+from .reservations import Reservation, ReservationRepository, SQLiteReservationRepository
+from .service import Library, ReturnReceipt
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 __all__ = [
     "Library",
+    "ReturnReceipt",
     "Book",
     "Loan",
+    "Reservation",
+    "Fine",
+    "FinePolicy",
+    "DailyFine",
+    "NoFine",
     "Member",
     "AdultMember",
     "StudentMember",
@@ -60,6 +74,9 @@ __all__ = [
     "member_type_names",
     "register_member_type",
     "MemberStatus",
+    "ReservationStatus",
+    "to_money",
+    "format_money",
     "Database",
     "BookRepository",
     "MemberRepository",
@@ -67,6 +84,10 @@ __all__ = [
     "SQLiteMemberRepository",
     "LoanRepository",
     "SQLiteLoanRepository",
+    "ReservationRepository",
+    "SQLiteReservationRepository",
+    "FineRepository",
+    "SQLiteFineRepository",
     "normalise_isbn",
     "LibraryError",
     "ValidationError",
@@ -78,8 +99,13 @@ __all__ = [
     "OverdueLoansError",
     "AlreadyReturnedError",
     "RenewalError",
+    "FinesOwedError",
+    "ReservationError",
+    "FineError",
     "BookInUseError",
     "LoanNotFoundError",
+    "ReservationNotFoundError",
+    "FineNotFoundError",
     "NotFoundError",
     "BookNotFoundError",
     "MemberNotFoundError",
