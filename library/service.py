@@ -39,6 +39,7 @@ from .repositories import (
     SQLiteMemberRepository,
 )
 from .reservations import Reservation, ReservationRepository, SQLiteReservationRepository
+from .search import BookSearch
 from .validation import whole_number
 
 Clock = Callable[[], date]
@@ -122,6 +123,14 @@ class Library:
     @property
     def books(self) -> list[Book]:
         return self._books.all()
+
+    def search(self, text: str | None = None, *, title: str | None = None,
+               author: str | None = None, year_from: int | None = None,
+               year_to: int | None = None, available_only: bool = False) -> list[Book]:
+        """Find books. Every part given must match, e.g. search(author="achebe")."""
+        query = BookSearch(text, title, author, year_from, year_to,
+                           self.today if available_only else None)
+        return self._books.search(query)
 
     def available_copies(self, book_id: int) -> int:
         """Copies on the shelf that anyone can borrow. Copies kept for a

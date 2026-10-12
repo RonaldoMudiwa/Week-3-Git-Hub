@@ -8,9 +8,9 @@ Week 2 added SOLID. This week adds a real database.
 
 ## Status
 
-Day 4 of 7. Books with ISBN checking, three kinds of member that each
+Day 5 of 7. Books with ISBN checking, three kinds of member that each
 borrow by their own rules, everything saved in SQLite, lending, returns and
-renewals, reservations and late fines.
+renewals, reservations, late fines, search and reports.
 
 ## Getting started
 
@@ -165,10 +165,43 @@ library.pay_fine(receipt.fine.fine_id)
 Owing £5 or more stops a member borrowing until they pay. Money is a
 `Decimal` and is saved as text, so no pennies are lost to rounding.
 
+## Search
+
+```python
+library.search("achebe")                         # title or author, any case
+library.search(author="adichie", year_from=2000)
+library.search("sun", available_only=True)        # only books on the shelf now
+```
+
+Every part given must match. The search is turned into one SQL query with
+`?` placeholders. `%` and `_` are wildcards in SQL's `LIKE`, so they're
+escaped first. That way searching for `100%` finds "100%", not everything
+starting with 100.
+
+## Reports
+
+```python
+from library import LibraryReport, TextFormatter
+
+report = LibraryReport(db)
+fmt = TextFormatter()
+
+print(fmt.overdue(report.overdue()))          # late books and who has them
+print(fmt.popular(report.most_borrowed()))    # most lent books
+print(fmt.members(report.members()))          # books out and money owed per member
+print(fmt.stock(report.stock()))              # copies owned, out, kept and on the shelf
+```
+
+These questions need several tables at once, so `LibraryReport` uses SQL
+`JOIN`, `GROUP BY` and `COUNT` instead of loading every loan into Python.
+Money is the one thing added up in Python, because SQLite would turn the
+amounts into floats. `LibraryReport` only works out the numbers and
+`TextFormatter` only prints them.
+
 ## Tests
 
 ```bash
-pytest          # 218 tests
+pytest          # 248 tests
 ```
 
 ## Week plan

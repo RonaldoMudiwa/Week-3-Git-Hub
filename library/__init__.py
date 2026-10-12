@@ -52,13 +52,29 @@ from .repositories import (
     SQLiteMemberRepository,
 )
 from .reservations import Reservation, ReservationRepository, SQLiteReservationRepository
+from .reports import (
+    LibraryReport,
+    MemberRow,
+    OverdueRow,
+    PopularRow,
+    StockSummary,
+    TextFormatter,
+)
+from .search import BookSearch
 from .service import Library, ReturnReceipt
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 __all__ = [
     "Library",
     "ReturnReceipt",
+    "BookSearch",
+    "LibraryReport",
+    "TextFormatter",
+    "OverdueRow",
+    "PopularRow",
+    "MemberRow",
+    "StockSummary",
     "Book",
     "Loan",
     "Reservation",

@@ -17,6 +17,7 @@ from .enums import MemberStatus
 from .exceptions import BookNotFoundError, DuplicateError, MemberNotFoundError, ValidationError
 from .isbn import normalise_isbn
 from .members import Member, member_class_for
+from .search import BookSearch, like_pattern
 
 
 class BookRepository(ABC):
@@ -43,6 +44,10 @@ class BookRepository(ABC):
     @abstractmethod
     def all(self) -> list[Book]:
         """Every book, sorted by title."""
+
+    @abstractmethod
+    def search(self, query: BookSearch) -> list[Book]:
+        """Books matching every part of the query, sorted by title."""
 
 
 class MemberRepository(ABC):
@@ -114,6 +119,43 @@ class SQLiteBookRepository(BookRepository):
 
     def all(self) -> list[Book]:
         rows = self._db.query("SELECT * FROM books ORDER BY title COLLATE NOCASE, book_id")
+        return [self._to_book(row) for row in rows]
+
+    def search(self, query: BookSearch) -> list[Book]:
+        # Each part adds one condition and its values. Values always go in
+        # params, never into the SQL text.
+        conditions: list[str] = []
+        params: list[object] = []
+        if query.text:
+            conditions.append("(title LIKE ? ESCAPE '\\' OR author LIKE ? ESCAPE '\\')")
+            params += [like_pattern(query.text)] * 2
+        if query.title:
+            conditions.append("title LIKE ? ESCAPE '\\'")
+            params.append(like_pattern(query.title))
+        if query.author:
+            conditions.append("author LIKE ? ESCAPE '\\'")
+            params.append(like_pattern(query.author))
+        if query.year_from is not None:
+            conditions.append("year >= ?")
+            params.append(query.year_from)
+        if query.year_to is not None:
+            conditions.append("year <= ?")
+            params.append(query.year_to)
+        if query.available_on is not None:
+            # Copies owned, minus copies lent out, minus copies kept for a reservation.
+            conditions.append(
+                "copies"
+                " - (SELECT COUNT(*) FROM loans l"
+                "    WHERE l.book_id = books.book_id AND l.returned_on IS NULL)"
+                " - (SELECT COUNT(*) FROM reservations r"
+                "    WHERE r.book_id = books.book_id AND r.status = 'ready' AND r.expires_on >= ?)"
+                " > 0"
+            )
+            params.append(query.available_on.isoformat())
+
+        where = " WHERE " + " AND ".join(conditions) if conditions else ""
+        rows = self._db.query(f"SELECT * FROM books{where} ORDER BY title COLLATE NOCASE, book_id",
+                              params)
         return [self._to_book(row) for row in rows]
 
     @staticmethod
