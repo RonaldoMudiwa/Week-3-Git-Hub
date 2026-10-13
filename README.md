@@ -8,9 +8,10 @@ Week 2 added SOLID. This week adds a real database.
 
 ## Status
 
-Day 5 of 7. Books with ISBN checking, three kinds of member that each
+Day 6 of 7. Books with ISBN checking, three kinds of member that each
 borrow by their own rules, everything saved in SQLite, lending, returns and
-renewals, reservations, late fines, search and reports.
+renewals, reservations, late fines, search, reports and a command line
+interface.
 
 ## Getting started
 
@@ -19,10 +20,38 @@ python -m venv .venv
 .venv\Scripts\activate           # macOS or Linux: source .venv/bin/activate
 pip install -r requirements.txt  # only needed for the tests
 
+python -m library --help         # see every command
+python -m library demo           # a quick tour with made up members
 pytest                           # run the tests
 ```
 
 Needs Python 3.10 or newer. The app itself only uses the standard library.
+
+## Using it from the terminal
+
+Everything is saved in `data/library.db`, which is made the first time you
+run a command. Use `--file other.db` before the command for a separate
+library.
+
+```bash
+python -m library add-book 0306406152 "Things Fall Apart" "Chinua Achebe" --year 1958 --copies 2
+python -m library join student "Amara Okafor" amara@example.com
+
+python -m library books achebe --available    # search, only books on the shelf
+python -m library lend 1 1                    # book id or ISBN, then member number
+python -m library renew 1
+python -m library return 1                    # shows any fine, and who to keep it for
+
+python -m library reserve 1 2
+python -m library loans 1 --history
+python -m library fines 2
+python -m library pay 1
+python -m library report                      # late books, popular books, members, stock
+```
+
+If the library says no, it prints `Error: ...` and nothing changes, because
+every command runs inside one database transaction. Each command is its own
+small class in `cli.py`, so adding one never means changing the others.
 
 ## Books
 
@@ -201,7 +230,7 @@ amounts into floats. `LibraryReport` only works out the numbers and
 ## Tests
 
 ```bash
-pytest          # 248 tests
+pytest          # 280 tests
 ```
 
 ## Week plan
