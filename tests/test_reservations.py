@@ -190,3 +190,9 @@ class TestReservationRepository:
             repo.update(Reservation(1, 1, date(2026, 10, 1)))
         with pytest.raises(ReservationNotFoundError):
             repo.update(Reservation(1, 1, date(2026, 10, 1), reservation_id=50))
+
+
+def test_a_reservation_for_one_book_does_not_affect_another(busy):
+    busy.reserve(ADICHIE, STUDENT)
+    busy.lend(ACHEBE, STUDENT)
+    assert busy.reservations_for(STUDENT)[0].status is ReservationStatus.WAITING

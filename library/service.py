@@ -102,6 +102,10 @@ class Library:
     def today(self) -> date:
         return self._clock()
 
+    def transaction(self) -> ContextManager[None]:
+        """Group several library actions so they all happen or none do."""
+        return self._transaction()
+
     # ------------------------------------------------------------------
     # Books
     # ------------------------------------------------------------------
@@ -112,6 +116,9 @@ class Library:
 
     def get_book(self, book_id: int) -> Book:
         return self._books.get(book_id)
+
+    def has_book(self, isbn: str) -> bool:
+        return self._books.find_by_isbn(isbn) is not None
 
     def find_book(self, isbn: str) -> Book:
         """Look a book up by ISBN. Raises BookNotFoundError if it isn't here."""

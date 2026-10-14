@@ -6,6 +6,7 @@ Books, members and loans, saved in a SQLite database.
 """
 
 from .book import Book
+from .csv_io import BookExporter, BookImporter, ImportResult
 from .database import Database
 from .enums import MemberStatus, ReservationStatus
 from .exceptions import (
@@ -63,12 +64,15 @@ from .reports import (
 from .search import BookSearch
 from .service import Library, ReturnReceipt
 
-__version__ = "0.5.0"
+__version__ = "1.0.0"
 
 __all__ = [
     "Library",
     "ReturnReceipt",
     "BookSearch",
+    "BookImporter",
+    "BookExporter",
+    "ImportResult",
     "LibraryReport",
     "TextFormatter",
     "OverdueRow",

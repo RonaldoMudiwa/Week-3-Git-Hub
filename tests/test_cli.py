@@ -260,3 +260,18 @@ class TestAddingCommands:
             session.library
         with pytest.raises(RuntimeError):
             session.report
+
+
+class TestCSVCommands:
+    def test_import_and_export(self, term, tmp_path):
+        source = tmp_path / "in.csv"
+        source.write_text("isbn,title,author\n0306406152,Things Fall Apart,Chinua Achebe\n",
+                          encoding="utf-8")
+        assert "Added 1 book(s)." in term.ok("import-books", str(source))
+        out = term.ok("import-books", str(source), "--skip-existing")
+        assert "Skipped 1" in out
+        assert "already in the catalogue" in term.fails("import-books", str(source))
+
+        target = tmp_path / "out.csv"
+        assert "Saved 1 book(s)" in term.ok("export-books", str(target))
+        assert "Things Fall Apart" in target.read_text(encoding="utf-8-sig")

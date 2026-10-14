@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Callable, Sequence, TextIO
 
 from .book import Book
+from .csv_io import BookExporter, BookImporter
 from .database import Database
 from .exceptions import LibraryError
 from .members import member_type_names
@@ -370,6 +371,34 @@ class ReportCommand(Command):
         session.say(f"Total fines owed: {format_money(report.total_owed())}")
 
 
+class ImportBooksCommand(Command):
+    name = "import-books"
+    help = "add books from a CSV file (columns: isbn, title, author, year, copies)"
+
+    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("csv_file", type=Path)
+        parser.add_argument("--skip-existing", action="store_true",
+                            help="leave books already in the catalogue instead of stopping")
+
+    def run(self, session: Session, args: argparse.Namespace) -> None:
+        result = BookImporter(session.library).import_file(args.csv_file, args.skip_existing)
+        session.say(f"Added {len(result.added)} book(s).")
+        if result.skipped:
+            session.say(f"Skipped {len(result.skipped)} already in the catalogue.")
+
+
+class ExportBooksCommand(Command):
+    name = "export-books"
+    help = "save the catalogue to a CSV file"
+
+    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("csv_file", type=Path)
+
+    def run(self, session: Session, args: argparse.Namespace) -> None:
+        count = BookExporter(session.library).export_file(args.csv_file)
+        session.say(f"Saved {count} book(s) to {args.csv_file}.")
+
+
 class DemoCommand(Command):
     name = "demo"
     help = "a short tour with made up members (your real library isn't touched)"
@@ -392,7 +421,8 @@ def default_commands() -> list[Command]:
         JoinCommand(), MembersCommand(), SuspendCommand(), ReinstateCommand(),
         LendCommand(), ReturnCommand(), RenewCommand(), LoansCommand(),
         ReserveCommand(), CancelCommand(), ReservationsCommand(),
-        FinesCommand(), PayCommand(), ReportCommand(), DemoCommand(),
+        FinesCommand(), PayCommand(), ReportCommand(),
+        ImportBooksCommand(), ExportBooksCommand(), DemoCommand(),
     ]
 
 

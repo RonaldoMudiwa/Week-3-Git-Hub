@@ -8,10 +8,18 @@ Week 2 added SOLID. This week adds a real database.
 
 ## Status
 
-Day 6 of 7. Books with ISBN checking, three kinds of member that each
-borrow by their own rules, everything saved in SQLite, lending, returns and
-renewals, reservations, late fines, search, reports and a command line
-interface.
+Finished. 297 tests with 100% line and branch coverage.
+
+## What it can do
+
+- Keep a catalogue of books, with every ISBN checked and stored the same way
+- Sign up adult, student and child members, each with their own borrowing rules
+- Lend, return and renew books, refusing anything that breaks the rules
+- Keep a queue of reservations, and hold returned copies for whoever is next
+- Charge late fines by member type, and stop borrowing when too much is owed
+- Search the catalogue and print reports on late books, popular books and stock
+- Import books from a spreadsheet and export the catalogue
+- Do all of the above from the terminal, with everything saved in SQLite
 
 ## Getting started
 
@@ -227,11 +235,109 @@ Money is the one thing added up in Python, because SQLite would turn the
 amounts into floats. `LibraryReport` only works out the numbers and
 `TextFormatter` only prints them.
 
+## Importing and exporting books
+
+```bash
+python -m library import-books new_books.csv                  # all or nothing
+python -m library import-books new_books.csv --skip-existing  # leave books already here
+python -m library export-books catalogue.csv
+```
+
+The CSV needs `isbn`, `title` and `author` columns. `year` and `copies` are
+optional. Headings can be in any case, and files saved by Excel work too.
+The whole file is checked before anything is saved, and the books are added
+in one transaction. If line 40 has a mistake, the error says "Line 40" and
+nothing from the file is added.
+
+## How it's built
+
+```
+library/
+├── cli.py            The terminal commands
+├── demo.py           The quick tour behind "python -m library demo"
+├── service.py        Library: lending, returns, renewals, reservations, fines
+├── book.py           A book in the catalogue
+├── members.py        Member and the adult, student and child types
+├── loans.py          Loan records and where they're saved
+├── reservations.py   The queue for books that are all out
+├── fines.py          Fine rules, fine records and where they're saved
+├── repositories.py   Saving and finding books and members
+├── search.py         What to search for
+├── reports.py        Librarian reports and turning them into text
+├── csv_io.py         Importing and exporting books
+├── database.py       Opening SQLite, setting up tables, transactions
+├── isbn.py           Checking ISBNs
+├── money.py          Exact amounts of money
+├── validation.py     Small checks shared by everything
+├── enums.py          MemberStatus and ReservationStatus
+└── exceptions.py     Every error the package can raise
+```
+
+### The database
+
+| Table | Holds |
+| --- | --- |
+| `books` | One row per title, with how many copies are owned |
+| `members` | One row per member, including which type they are |
+| `loans` | Every loan ever, with `returned_on` empty while it's out |
+| `fines` | One row per late loan, with `paid_on` empty until paid |
+| `reservations` | The queue, with a status of waiting, ready, collected, cancelled or expired |
+
+Foreign keys link loans, fines and reservations to their book and member,
+and stop either being deleted while anything points at them. Indexes on
+the columns that are searched most keep lookups quick as the tables grow.
+
+### OOP
+
+- **Abstraction.** `Member`, the repositories and `FinePolicy` are abstract
+  classes. They say what has to be done and leave how to the subclasses.
+- **Encapsulation.** A member's status only changes through `suspend()` and
+  `reinstate()`. Books, loans, fines and reservations are frozen, so they
+  can only be replaced with a checked new copy, never edited half way.
+- **Inheritance.** `AdultMember`, `StudentMember` and `ChildMember` share all
+  the work in `Member` and only add their own numbers.
+- **Polymorphism.** The `Library` asks any member for `max_loans`,
+  `loan_days` and `fine_policy`, and never checks what type they are.
+
+### SOLID
+
+- **Single responsibility.** `Library` holds the lending rules, the
+  repositories only save and load, `LibraryReport` only answers questions,
+  and `TextFormatter` only prints.
+- **Open/closed.** A new member type is a new subclass with
+  `@register_member_type`. A new fine rule is a new `FinePolicy`. A new
+  terminal command is a new `Command` class. Nothing else changes.
+- **Liskov substitution.** The same tests run against every member type in
+  `tests/test_members.py`.
+- **Interface segregation.** Books, members, loans, fines and reservations
+  each have their own small repository, instead of one giant one.
+- **Dependency inversion.** `Library` is handed abstract repositories, a
+  transaction function and a clock. It never touches SQLite itself, and tests
+  can set the date.
+
 ## Tests
 
 ```bash
-pytest          # 280 tests
+pytest                 # 297 tests
+pytest --cov           # the same, plus a coverage report
 ```
+
+Coverage settings live in `.coveragerc`, and the run fails below 95%. Every
+test uses a database in memory or in pytest's `tmp_path`, and a `FakeClock`
+sets the date, so they never touch real data and give the same result on
+any day.
+
+| File | What it checks |
+| --- | --- |
+| `test_isbn.py`, `test_book.py` | ISBN checks and books |
+| `test_members.py` | The rules every member type must follow, and each one's own |
+| `test_database.py`, `test_repositories.py` | Tables, transactions, saving and finding |
+| `test_loans.py`, `test_lending.py` | Lending, returns, renewals and every refusal |
+| `test_reservations.py` | The queue, kept copies and expiry |
+| `test_fines.py` | Fine rules, charging, paying and the borrowing limit |
+| `test_search.py`, `test_reports.py` | Search, reports and the text tables |
+| `test_csv_io.py` | Import and export, including bad files |
+| `test_cli.py` | Every terminal command |
 
 ## Week plan
 
@@ -244,3 +350,5 @@ pytest          # 280 tests
 | 5 | Search and reports |
 | 6 | Command line interface |
 | 7 | CSV import, final tests and README |
+
+All seven days are done.
